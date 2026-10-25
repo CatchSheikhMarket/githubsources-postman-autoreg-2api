@@ -83,6 +83,7 @@ Haiku 4.5.
 - **Python 3.10+** и `camoufox` — для реггера
 - **Go 1.24+** — для моста (на Windows `.bat` соберёт `postman2api.exe` сам)
 - **Catch-all почта** с admin API — чтобы читать коды подтверждения
+  (как поднять с нуля — [`register/docs/ПОЧТА.md`](register/docs/ПОЧТА.md))
 - **Прокси** (желательно) — ISP со статичным IP, иначе Cloudflare банит
 
 ### Windows (одним файлом)
@@ -175,6 +176,7 @@ register/
 ├── core/            логика регистрации, почта, прокси, лимиты
 ├── panel/           веб-панель (:9924) — запуск прогонов, статистика
 ├── docs/РАЗБОР.md   полный разбор флоу и грабель
+├── docs/ПОЧТА.md    как поднять catch-all почту для авторега
 ├── tests/           selfcheck без сети
 ├── config.example.json
 └── start.sh
