@@ -50,10 +50,9 @@ Thumbs.db
 .vscode/
 *.swp
 
-# === Go (бинарник моста) ===
-postman2api
-postman2api.exe
-*.exe
+# === venv моста ===
+bridge/venv/
+
 
 # === Сессии Postman ===
 sessions.txt

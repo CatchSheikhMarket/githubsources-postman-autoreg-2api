@@ -10,7 +10,7 @@ Terra/Luna, Claude Opus 4.8, Sonnet 4.6, Haiku 4.5 — 11 моделей.
 ```
 register/   — авторегер: регистрирует аккаунты, проходит Turnstile, активирует триал,
               достаёт cookie postman.sid и пишет в пул
-bridge/     — мост (Go): держит пул сессий, ротирует, отдаёт OpenAI- и
+bridge/     — мост (Python): держит пул сессий, ротирует, отдаёт OpenAI- и
               Anthropic-совместимый API
 ```
 
@@ -81,7 +81,7 @@ Haiku 4.5.
 ### Что нужно
 
 - **Python 3.10+** и `camoufox` — для реггера
-- **Go 1.24+** — для моста (на Windows `.bat` соберёт `postman2api.exe` сам)
+- **Python 3.10+** и `requests` — для моста (Go не нужен, exe не собирается)
 - **Catch-all почта** с admin API — чтобы читать коды подтверждения
   (как поднять с нуля — [`register/docs/ПОЧТА.md`](register/docs/ПОЧТА.md))
 
@@ -95,7 +95,7 @@ Haiku 4.5.
 | Файл | Что делает |
 |---|---|
 | `register\start.bat` | создаёт venv, ставит зависимости, качает camoufox, копирует конфиг, поднимает панель |
-| `bridge\start.bat` | собирает `postman2api.exe` (если есть Go), копирует конфиг и сессии, поднимает мост |
+| `bridge\start.bat` | создаёт venv, ставит `requests`, копирует конфиг и сессии, поднимает мост |
 
 Флаги: `--reinstall` / `--rebuild` — пересоздать окружение или бинарник,
 `--skip-install` / `--skip-build` — запустить без установки.
@@ -184,11 +184,10 @@ register/
 └── start.sh
 
 bridge/
-├── cmd/server/      точка входа
-├── internal/app/    чат, Anthropic-адаптер, пул сессий, tools, дашборд
-├── .env.example
-├── config.example.json
-└── start.sh
+├── server.py        мост целиком: чат, Anthropic-адаптер, пул сессий, tools
+├── prune.py         уборка мёртвых сессий
+├── requirements.txt
+└── config.example.json
 ```
 
 ---

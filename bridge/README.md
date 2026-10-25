@@ -1,6 +1,8 @@
 # postman2api — мост Postman AI → OpenAI / Anthropic API
 
 Пул веб-сессий Postman (`postman.sid`), ротация, квота в каждом ответе.
+**Чистый Python** — без Go, без сборки exe.
+
 Порт по умолчанию **12049**.
 
 Наполняется реггером [`../register`](../register/README.md): после регистрации
@@ -12,22 +14,16 @@
 
 ```bash
 cp config.example.json config.json
-bash start.sh          # соберёт бинарник (если есть Go) и поднимет мост
+bash start.sh          # сам поставит requests и поднимет мост
 ```
 
-Windows: двойной клик по `start.bat` — соберёт `postman2api.exe` и запустит.
-Флаги: `--rebuild` (пересобрать), `--skip-build` (запустить готовый exe).
+Windows: двойной клик по `start.bat` — создаст venv, поставит зависимости,
+скопирует конфиг и запустит.
 
 Проверка:
 
 ```bash
 curl http://127.0.0.1:12049/v1/models -H "Authorization: Bearer postman2api"
-```
-
-Сборка вручную:
-
-```bash
-CGO_ENABLED=0 go build -o postman2api ./cmd/server
 ```
 
 ---
@@ -43,8 +39,8 @@ CGO_ENABLED=0 go build -o postman2api ./cmd/server
 
 ## Модели
 
-`gpt-6.1-sol` (дефолт), `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`,
-`claude-opus-4.8`, `claude-opus-4.7`, `claude-opus-4.5`,
+`gpt-6.1-sol` (дефолт), `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`,
+`gpt-5.5`, `gpt-5.4`, `claude-opus-4.8`, `claude-opus-4.7`, `claude-opus-4.5`,
 `claude-sonnet-4.6`, `claude-sonnet-4.5`, `claude-haiku-4.5`.
 
 Список живой — `GET /v1/models`.
@@ -58,7 +54,7 @@ CGO_ENABLED=0 go build -o postman2api ./cmd/server
 | POST | `/v1/chat/completions` | OpenAI-совместимый чат (stream и non-stream) |
 | POST | `/v1/messages` | Anthropic-совместимый |
 | GET | `/v1/models` | каталог моделей |
-| GET | `/` | дашборд: пул, квоты, расход |
+| GET | `/` | простая страница со статусом пула |
 | GET | `/status`, `/health` | состояние моста |
 
 ---
@@ -78,8 +74,13 @@ CGO_ENABLED=0 go build -o postman2api ./cmd/server
 }
 ```
 
-Когда `usage >= limit` (`usage_state: EXHAUSTED`), мост исключает сессию из
-ротации и переходит к следующей.
+Когда `usage >= limit`, сессия исключается из ротации и берётся следующая.
+Отдельный `prune.py` чистит пул заранее:
+
+```bash
+python3 prune.py --dry      # показать
+python3 prune.py --archive  # убрать мёртвые в data/archive/
+```
 
 ---
 
@@ -93,39 +94,43 @@ cookie:<postman.sid>
 # строки с # игнорируются
 ```
 
-Порядок обхода — по кругу. Сессия, отбитая 401/403, исключается до перезапуска.
-
-Взять `postman.sid` вручную: DevTools → Application → Cookies → `postman.sid`
-на домене `postman.co`. Либо дать реггеру — он сделает это сам.
+Порядок обхода — по кругу. Сессия, отбитая 401, исключается до перезапуска.
+`postman.sid` можно взять в DevTools → Application → Cookies → `postman.co`
+или дать реггеру — он сделает это сам.
 
 ---
 
-## Настройка (.env)
+## Настройка
 
-Основное — в `.env.example`. Ключевые параметры:
+`config.json` (или переменные окружения):
 
-| Переменная | Что |
+| Параметр | Что |
 |---|---|
-| `AUTH_TOKEN` | ключ, который мост спрашивает у клиентов (`postman2api`) |
-| `SESSIONS_FILE` | файл пула (по умолчанию `sessions.txt`) |
-| `PORT` | порт (12049) |
-| `DEFAULT_MODEL` | модель по умолчанию |
+| `port` | порт (12049) |
+| `auth_token` | ключ, который мост спрашивает у клиентов |
+| `sessions_file` | файл пула (`sessions.txt`) |
+| `default_model` | модель по умолчанию |
+| `app_version` | версия клиента для `x-app-version` |
 | `MAX_QUERY_BYTES` | лимит поля `input.query` (~9800) |
-| `POSTMAN_APP_VERSION` | версия клиента для заголовка `x-app-version` |
 
 Хэши инструментов привязаны к версии Postman — при `TOOL_VALIDATION_ERROR`
-перехвати свежие и задай `POSTMAN_TOOLS_HASH` / `POSTMAN_TERMS_HASH`.
+перехвати свежие и задай `POSTMAN_TOOLS_HASH` / `POSTMAN_TERMS_HASH`
+(и `_SDK`-варианты) в `.env`.
 
 ---
 
 ## Ограничения
 
 - **Неофициальный контракт.** Мост подставляет заголовки десктопного клиента к
-  `gateway.postman.com`. Postman может поменять схему в любой момент.
+  `gateway.postman.com`. Схему могут поменять.
 - **`input.query` ~10 000 символов** — лимит поля, не контекст. System уходит
   отдельно (`backgroundContext.AGENTS_MD`), история обрезается.
 - **System нельзя дублировать в query** — safety-фильтр отвечает
   «This message got flagged by our safety checks».
 - **Инструменты** требуют дочерний product `workspace_tools_sdk_localmode`
-  со своими хэшами; без него `tools` игнорируются.
+  со своими хэшами.
 - **Только веб-сессия.** API-ключа «просто так» нет: нужен `postman.sid`.
+- **Метрик токенов у Postman нет** — в `usage` отдаётся оценка (символы / 4),
+  реальная квота лежит в `_postman_usage`.
+- **Tool-цикл упрощён:** результаты инструментов уходят в запрос текстом.
+  Полное продолжение диалога (TOOL_RESPONSE) — в планах.

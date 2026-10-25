@@ -5,19 +5,18 @@ setlocal enabledelayedexpansion
 
 REM ============================================================
 REM  Windows-лаунчер моста postman2api (Postman AI -> OpenAI/Anthropic).
-REM  Мост написан на Go: скрипт сам собирает postman2api.exe,
-REM  копирует пример конфига и поднимает сервер.
-REM  Флаги: --rebuild      (пересобрать exe)
-REM         --skip-build   (не собирать, запустить готовый exe)
+REM  Чистый Python: без Go, без сборки exe.
+REM  Флаги: --reinstall    (пересоздать venv)
+REM         --skip-install (не ставить зависимости, просто запустить)
 REM ============================================================
 
 cd /d "%~dp0"
 
-set REBUILD=0
-set SKIP_BUILD=0
+set REINSTALL=0
+set SKIP_INSTALL=0
 for %%a in (%*) do (
-    if /I "%%a"=="--rebuild" set REBUILD=1
-    if /I "%%a"=="--skip-build" set SKIP_BUILD=1
+    if /I "%%a"=="--reinstall" set REINSTALL=1
+    if /I "%%a"=="--skip-install" set SKIP_INSTALL=1
 )
 
 echo ================================
@@ -25,77 +24,84 @@ echo   postman2api (мост)
 echo ================================
 echo.
 
-REM ---------- 1. Конфиг ----------
+REM ---------- 1. Python ----------
+set PYTHON_BIN=
+for %%P in (python python3 py) do (
+    if not defined PYTHON_BIN (
+        %%P --version >nul 2>&1
+        if not errorlevel 1 set PYTHON_BIN=%%P
+    )
+)
+if not defined PYTHON_BIN (
+    echo [ERROR] Python не найден.
+    echo Установи Python 3.10+ : https://www.python.org/downloads/
+    echo ВАЖНО: при установке отметь "Add Python to PATH".
+    pause
+    exit /b 1
+)
+echo [*] Python:
+%PYTHON_BIN% --version
+
+REM ---------- 2. venv ----------
+if "%REINSTALL%"=="1" (
+    if exist venv (
+        echo [*] --reinstall: удаляю старый venv...
+        rmdir /s /q venv
+    )
+)
+set VENV_PY=venv\Scripts\python.exe
+if not exist "%VENV_PY%" (
+    echo [*] Создаю виртуальное окружение...
+    %PYTHON_BIN% -m venv venv
+    if errorlevel 1 (
+        echo [ERROR] Не удалось создать venv. Переустанови Python с полными компонентами.
+        pause
+        exit /b 1
+    )
+)
+
+REM ---------- 3. Зависимости ----------
+if "%SKIP_INSTALL%"=="1" goto SKIP_DEPS
+"%VENV_PY%" -c "import requests" >nul 2>&1
+if errorlevel 1 (
+    echo [*] Ставлю зависимости...
+    "%VENV_PY%" -m pip install --upgrade pip --quiet
+    "%VENV_PY%" -m pip install -r requirements.txt
+    if errorlevel 1 (
+        echo [ERROR] Установка не удалась. Проверь интернет и запусти: start.bat --reinstall
+        pause
+        exit /b 1
+    )
+)
+:SKIP_DEPS
+
+REM ---------- 4. Конфиг и сессии ----------
 if not exist config.json (
     if exist config.example.json (
         copy /y config.example.json config.json >nul
         echo [!] Создан config.json из примера.
-        echo     Проверь порт (по умолчанию 12049) и default_model.
     )
 )
-
 if not exist sessions.txt (
     if exist sessions.txt.example (
         copy /y sessions.txt.example sessions.txt >nul
     ) else (
         echo # по одной сессии на строку: cookie:^<postman.sid^> > sessions.txt
     )
-    echo [!] sessions.txt создан пустым.
-    echo     Добавь сессию: либо запусти реггер, либо возьми postman.sid вручную
-    echo     (DevTools - Application - Cookies - postman.co - postman.sid).
+    echo [!] sessions.txt создан пустым. Добавь сессию или запусти реггер.
 )
-
 if not exist data mkdir data
 
-REM ---------- 2. Сборка ----------
-if "%SKIP_BUILD%"=="1" goto SKIP_GO
-if "%REBUILD%"=="1" (
-    if exist postman2api.exe (
-        echo [*] --rebuild: удаляю старый exe...
-        del /q postman2api.exe
-    )
-)
-
-if exist postman2api.exe goto SKIP_GO
-
-where go >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Go не найден, а готового postman2api.exe нет.
-    echo.
-    echo Установи Go 1.24+ : https://go.dev/dl/
-    echo ВАЖНО: при установке Go сам добавит себя в PATH (перезапусти консоль).
-    echo После установки запусти start.bat снова — он соберёт exe.
-    echo.
-    echo Или скачай готовый postman2api.exe из Releases репозитория
-    echo и положи рядом с этим файлом.
-    pause
-    exit /b 1
-)
-
-echo [*] Go:
-go version
-echo [*] Собираю postman2api.exe...
-set CGO_ENABLED=0
-go build -o postman2api.exe .\cmd\server
-if errorlevel 1 (
-    echo.
-    echo [ERROR] Сборка упала. Проверь, что установлен Go 1.24+.
-    pause
-    exit /b 1
-)
-echo [*] Собрано: postman2api.exe
-:SKIP_GO
-
-REM ---------- 3. Порт из конфига ----------
+REM ---------- 5. Порт и запуск ----------
 set PORT=12049
-for /f "delims=" %%p in ('python -c "import json;print(json.load(open('config.json')).get('port',12049))" 2^>nul') do set PORT=%%p
+for /f "delims=" %%p in ('"%VENV_PY%" -c "import json;print(json.load(open('config.json')).get('port',12049))" 2^>nul') do set PORT=%%p
 
 echo.
 echo [*] Мост: http://127.0.0.1:%PORT%
 echo [*] Ключ для клиентов: postman2api
 echo [*] Запускаю...
 echo.
-postman2api.exe
+"%VENV_PY%" -u server.py
 
 echo.
 echo [*] Процесс завершён.
