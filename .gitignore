@@ -1,0 +1,60 @@
+# === Секреты и личные данные (НИКОГДА не коммитить) ===
+config.json
+config.toml
+.env
+.env.*
+!.env.example
+!config.example.json
+!config.example.toml
+*.session
+*.session-journal
+accounts/
+cookies/
+*.jsonl
+keys.txt
+*.key
+secrets*
+credentials*
+
+# === Данные рантайма ===
+data/
+logs/
+debug/
+*.log
+*.pid
+seen.json
+usage.jsonl
+keys_state.json
+
+# === Python ===
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# === Node (если есть фронтенд) ===
+node_modules/
+dist/
+build/
+.pnpm-store/
+
+# === ОС / редакторы ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# === Go (бинарник моста) ===
+postman2api
+postman2api.exe
+*.exe
+
+# === Сессии Postman ===
+sessions.txt
+!sessions.txt.example

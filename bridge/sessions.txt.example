@@ -1,0 +1,13 @@
+# По одной сессии Postman на строку. Пустые строки и # — игнорируются.
+#
+# Два вида сессий:
+#   access_token   — просто строка токена (Desktop, DevTools → Network →
+#                    gateway.postman.com → заголовок x-access-token);
+#   cookie:<postman.sid> — кука веб-сессии postman.co
+#                    (браузер → F12 → Application → Cookies → .postman.co →
+#                    postman.sid). Gateway принимает её как авторизацию
+#                    веб-версии; аккаунт виден как FREE/PAID_USER.
+#
+# Строки ниже — ПРИМЕР ФОРМАТА, не настоящие токены. Не коммить настоящий файл.
+# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example-token-1
+# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example-token-2

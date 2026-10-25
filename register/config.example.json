@@ -1,0 +1,56 @@
+{
+  "_комментарий": "ШАБЛОН. Скопируй в config.json и заполни своими значениями. Секреты не коммитить.",
+  "base_url": "https://identity.getpostman.com",
+  "turnstile_sitekey": "0x4AAAAAAAYx_CBZ0IJEN60P",
+  "turnstile_solver": "auto",
+  "camoufox_python": "",
+
+  "_mail_note": "Catch-all почтовый сервис с admin API. Нужен, чтобы читать письма подтверждения. Подойдёт любой свой: свой домен + Cloudflare Email Routing + воркер, или сервис временной почты с API.",
+  "mail_base": "https://apimail.example.com",
+  "mail_admin_key": "REPLACE_ME",
+  "mail_domain": "mail.example.com",
+  "mail_domains": [
+    "mail.example.com",
+    "mail2.example.com"
+  ],
+  "mail_dot_domains": [],
+  "mail_ua": "curl/8.5.0",
+  "mail_timeout_sec": 150,
+  "mail_poll_sec": 5,
+  "address_prefix": "",
+
+  "_gmail_note": "Второй источник писем: плюс-алиасы одного Gmail-ящика через IMAP (app password). Пусто/disabled — не используется.",
+  "gmail": {
+    "enabled": false,
+    "user": "",
+    "app_password": "",
+    "alias_prefix": "jv"
+  },
+
+  "_proxy_note": "Прокси. Вариант 1: isp_zones (статичные IP, нужны когда сервис сверяет IP капчи и сабмита). Вариант 2: brd_zones (ротация по сессиям). Вариант 3: пусто — напрямую.",
+  "brd_customer": "REPLACE_ME",
+  "brd_host": "brd.superproxy.io:44445",
+  "isp_zones": [
+    {
+      "zone": "isp_proxy1",
+      "password": "REPLACE_ME",
+      "country": "us"
+    }
+  ],
+  "brd_zones": [],
+  "proxies": [],
+  "proxies_file": "data/proxies.txt",
+  "proxy_check_timeout": 10,
+  "proxy_check_workers": 20,
+
+  "batch_interval_sec": 45,
+  "circuit_breaker_fails": 5,
+
+  "output_jsonl": "data/accounts.jsonl",
+  "output_combo": "data/accounts.txt",
+
+  "panel_port": 9924,
+  "bridge_port": 12049,
+  "service_name": "postman",
+  "fallback_free_models": []
+}

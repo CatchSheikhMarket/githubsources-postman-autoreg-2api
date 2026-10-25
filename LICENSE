@@ -1,0 +1,50 @@
+MIT License
+
+Copyright (c) 2026 postman-autoreg-2api contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+УСЛОВИЕ ДОБРОСОВЕСТНОГО ИСПОЛЬЗОВАНИЯ (Good Faith Use Addendum)
+================================================================================
+
+Лицензия выше даёт полную свободу в использовании, изменении и
+распространении кода. В дополнение к ней — просьба, от которой зависит,
+имеешь ли ты право этим пользоваться:
+
+1. Только добрые намерения. Код предназначен для личных задач, обучения,
+   исследований и автоматизации собственной работы. Используй его так,
+   чтобы не вредить другим людям.
+
+2. Не обманывай людей. Запрещено применять этот код для мошенничества,
+   фишинга, выдачи себя за другого, обмана пользователей или сервисов
+   с целью причинить им вред.
+
+3. Не абузь сервисы. Не используй код для перегрузки, обхода защиты ради
+   вреда, кражи чужих аккаунтов/данных или иных действий, нарушающих
+   закон и права третьих лиц.
+
+4. Соблюдай правила площадок. Автоматизация сторонних сервисов может
+   нарушать их пользовательское соглашение. Решение о запуске и
+   ответственность за последствия — на тебе.
+
+5. Без гарантий. Автор не несёт ответственности за то, как ты используешь
+   код, и за любые последствия такого использования.
+
+Если ты не согласен с этими условиями — не используй код.

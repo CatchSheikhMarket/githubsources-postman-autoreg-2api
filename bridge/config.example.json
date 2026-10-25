@@ -1,0 +1,11 @@
+{
+  "_комментарий": "postman2api — мост Postman AI (Agent Mode) → OpenAI/Anthropic API. Скопируй в config.json.",
+  "project_root": "../register",
+  "port": 12049,
+  "bridge": {
+    "upstream_proxy": "none"
+  },
+  "sessions_file": "sessions.txt",
+  "default_model": "gpt-6.1-sol",
+  "app_version": "12.26.4"
+}

@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>панель реггера</title>
+<style>
+  :root {
+    --bg-base: #090d16;
+    --bg-surface: #0f1726;
+    --bg-elevated: #152033;
+    --bg-subtle: #1c2a42;
+    --border: #223452;
+    --border-hover: #324b75;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.25);
+    --accent-hover: #60a5fa;
+    --ok: #10b981;
+    --ok-bg: rgba(16, 185, 129, 0.12);
+    --ok-border: rgba(16, 185, 129, 0.35);
+    --warn: #f59e0b;
+    --warn-bg: rgba(245, 158, 11, 0.12);
+    --warn-border: rgba(245, 158, 11, 0.35);
+    --bad: #ef4444;
+    --bad-bg: rgba(239, 68, 68, 0.12);
+    --bad-border: rgba(239, 68, 68, 0.35);
+    --dim-bg: rgba(148, 163, 184, 0.1);
+    --dim-border: rgba(148, 163, 184, 0.25);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --transition: 0.18s ease;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-width: 900px;
+  }
+  .mono { font-family: var(--mono); font-size: 12px; }
+  .hide { display: none !important; }
+
+  header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 22px; gap: 16px; flex-wrap: wrap;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  .header-brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .status-indicator {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ok); box-shadow: 0 0 8px var(--ok);
+    transition: var(--transition);
+  }
+  .pulse-dot.offline { background: var(--bad); box-shadow: 0 0 8px var(--bad); }
+  .pulse-dot.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .brand-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .ver-badge {
+    font-size: 11px; font-weight: 600; color: var(--accent-hover);
+    background: var(--accent-glow); padding: 2px 7px; border-radius: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.3); font-family: var(--mono);
+  }
+  .meta-info { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .meta-info strong { color: var(--text-secondary); font-family: var(--mono); font-weight: 500; }
+
+  .run-panel {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 6px 12px; flex-wrap: wrap;
+  }
+  .run-input-group { display: flex; align-items: center; gap: 6px; }
+  .run-input-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  input[type=number] {
+    background: var(--bg-base); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 5px 8px; font-size: 12px; font-family: var(--mono);
+    outline: none; transition: border-color var(--transition);
+    width: 64px; text-align: center;
+  }
+  input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+
+  button {
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    border: 1px solid transparent; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: all var(--transition); user-select: none;
+  }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #fff; border-color: #2563eb; box-shadow: 0 2px 8px var(--accent-glow); }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn-parallel { background: #7c3aed; color: #fff; border-color: #6d28d9; box-shadow: 0 2px 8px rgba(124,58,237,.3); }
+  .btn-parallel:hover:not(:disabled) { background: #8b5cf6; }
+  .btn-danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  .btn-danger:hover:not(:disabled) { background: var(--bad-bg); }
+  .btn-ghost { background: var(--bg-elevated); border-color: var(--border); color: var(--text-secondary); }
+  .btn-ghost:hover:not(:disabled) { background: var(--bg-subtle); color: var(--text-primary); border-color: var(--border-hover); }
+
+  .job-progress-wrapper { display: flex; align-items: center; gap: 8px; }
+  .job-step-line { display: flex; align-items: center; gap: 10px; flex-basis: 100%; margin-top: 6px; }
+  .job-workers { flex-basis: 100%; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .dash-cell { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .dash-cell .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+  .dash-cell .val { font-size: 20px; font-weight: 600; font-family: var(--mono); margin-top: 4px; }
+  .dash-cell .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .dash-cell.ok .val { color: #4ade80; }
+  .dash-cell.warn .val { color: #fbbf24; }
+  .dash-cell.hot .val { color: #f87171; }
+  .worker-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .worker-row .w-name { font-family: var(--mono); color: var(--accent-hover); min-width: 32px; }
+  .worker-row .w-label { color: var(--text-secondary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .step-bar-wrap { flex: 0 0 120px; height: 4px; border-radius: 2px; background: var(--bg-elevated); overflow: hidden; }
+  .step-bar-fill { height: 100%; width: 0%; border-radius: 2px; background: linear-gradient(90deg, #22c55e, #4ade80); transition: width .4s ease; }
+  .job-status-tag { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--text-secondary); min-width: 75px; }
+  .progress-bar-wrap {
+    width: 120px; height: 8px; background: var(--bg-base);
+    border: 1px solid var(--border); border-radius: 999px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), #60a5fa);
+    border-radius: 999px; transition: width 0.3s ease;
+  }
+
+  nav.tabs-nav {
+    display: flex; gap: 4px; padding: 12px 22px 0;
+    background: var(--bg-base); border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  nav.tabs-nav button {
+    background: transparent; color: var(--text-secondary);
+    border: 1px solid transparent; border-bottom: none;
+    border-radius: 8px 8px 0 0; padding: 9px 18px; font-size: 13px; font-weight: 500;
+    position: relative; top: 1px;
+  }
+  nav.tabs-nav button:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.02); }
+  nav.tabs-nav button.active {
+    background: var(--bg-surface); color: var(--text-primary);
+    border-color: var(--border); border-bottom-color: var(--bg-surface); font-weight: 600;
+  }
+  nav.tabs-nav button .tab-count {
+    font-size: 11px; background: var(--bg-elevated); border: 1px solid var(--border);
+    color: var(--text-muted); padding: 1px 6px; border-radius: 999px;
+    font-family: var(--mono); margin-left: 6px;
+  }
+
+  main { padding: 20px 22px 50px; max-width: 1440px; margin: 0 auto; }
+  .card {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 18px;
+  }
+  .card h2 { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card h2 .sub { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--accent-hover); }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+  tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+    border: 1px solid; white-space: nowrap;
+  }
+  .badge.ok { color: var(--ok); background: var(--ok-bg); border-color: var(--ok-border); }
+  .badge.failed { color: var(--bad); background: var(--bad-bg); border-color: var(--bad-border); }
+  .badge.unknown { color: var(--text-secondary); background: var(--dim-bg); border-color: var(--dim-border); }
+  .badge.warn { color: var(--warn); background: var(--warn-bg); border-color: var(--warn-border); }
+
+  .key-cell {
+    font-family: var(--mono); font-size: 11px; cursor: pointer;
+    color: var(--accent-hover); max-width: 320px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+    border-bottom: 1px dashed var(--border-hover); padding-bottom: 1px;
+  }
+  .key-cell:hover { color: #93c5fd; border-bottom-color: #93c5fd; }
+  .key-cell.copied { color: var(--ok); border-bottom-color: var(--ok); }
+
+  .kv { display: grid; grid-template-columns: 220px 1fr; gap: 6px 14px; font-size: 13px; }
+  .kv dt { color: var(--text-muted); }
+  .kv dd { color: var(--text-primary); font-family: var(--mono); font-size: 12px; }
+
+  .log-box {
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 12px 14px; font-family: var(--mono); font-size: 11.5px; line-height: 1.6;
+    max-height: 480px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+    color: var(--text-secondary);
+  }
+  .empty { color: var(--text-muted); font-style: italic; padding: 18px; text-align: center; }
+  .toast {
+    position: fixed; bottom: 22px; right: 22px; z-index: 200;
+    background: var(--bg-elevated); border: 1px solid var(--border-bright, #3d5d91);
+    border-radius: var(--radius-md); padding: 10px 16px; font-size: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; max-width: 420px;
+  }
+  .toast.show { opacity: 1; }
+  .toast.err { border-color: var(--bad); color: var(--bad); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="status-indicator" title="Статус панели">
+      <span class="pulse-dot" id="svc-dot"></span>
+      <span id="svc-status">подключение…</span>
+    </div>
+    <div class="brand-title"><span id="svc-name">реггер</span> <span class="ver-badge" id="ver">v…</span></div>
+    <div class="meta-info">
+      <span>сервис: <strong id="svc-service">—</strong></span>
+      <span>·</span>
+      <span>аккаунтов: <strong id="hdr-total">—</strong>
+        (<span style="color:var(--ok)">ok <strong id="hdr-ok">—</strong></span> /
+         <span style="color:var(--bad)">fail <strong id="hdr-failed">—</strong></span> /
+         <span style="color:var(--text-muted)">? <strong id="hdr-unknown">—</strong></span>)</span>
+      <span>·</span>
+      <span>мост <span id="bridge-port-label"></span> <span class="badge unknown" id="bridge-badge">…</span></span>
+      <span>·</span>
+      <span>последний прогон: <strong id="hdr-lastrun">—</strong></span>
+    </div>
+  </div>
+  <div class="run-panel">
+    <div class="run-input-group">
+      <label for="count">акков</label>
+      <input type="number" id="count" value="1" min="1" max="500">
+    </div>
+    <div class="run-input-group">
+      <label for="workers">потоков</label>
+      <input type="number" id="workers" value="1" min="1" max="12" title="сколько аккаунтов регать одновременно (каждый на своём прокси)">
+    </div>
+    <button class="btn-primary" id="btn-run" onclick="startRegister()">▶ Регистрировать</button>
+    <button class="btn-parallel" id="btn-run-par" onclick="startRegister(true)">⚡ Параллельно</button>
+    <div class="job-progress-wrapper">
+      <span class="job-status-tag" id="job-tag">idle</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="job-fill"></div></div>
+      <span class="mono" id="job-nums" style="font-size:11px;color:var(--text-muted)">0/0</span>
+    </div>
+    <button class="btn-danger hide" id="btn-stop" onclick="stopJob()">■ Стоп</button>
+    <div class="job-step-line hide" id="job-step-line">
+      <span class="mono" id="job-step-text" style="font-size:11px;color:var(--text-secondary)"></span>
+      <div class="step-bar-wrap"><div class="step-bar-fill" id="job-step-fill"></div></div>
+    </div>
+    <div class="job-workers hide" id="job-workers"></div>
+  </div>
+</header>
+
+<nav class="tabs-nav">
+  <button class="active" data-tab="accounts" onclick="showTab('accounts')">Аккаунты <span class="tab-count" id="tab-count-accounts"></span></button>
+  <button data-tab="models" onclick="showTab('models')">Модели <span class="tab-count" id="tab-count-models"></span></button>
+  <button data-tab="limits" onclick="showTab('limits')">Лимиты</button>
+  <button data-tab="captcha" onclick="showTab('captcha')">Капча</button>
+  <button data-tab="pool" onclick="showTab('pool')">Пул моста</button>
+  <button data-tab="bridge" onclick="showTab('bridge')">Мост</button>
+  <button data-tab="connect" onclick="showTab('connect')">Подключение</button>
+  <button data-tab="logs" onclick="showTab('logs')">Логи</button>
+</nav>
+
+<main>
+  <!-- Аккаунты -->
+  <section id="tab-accounts" class="card">
+    <h2>Аккаунты
+      <span class="sub" id="accounts-sub">загрузка…</span>
+      <span style="flex:1"></span>
+      <label style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" id="hide-exhausted" onchange="renderAccounts()" checked>
+        скрыть исчерпанные
+      </label>
+      <button class="btn-ghost" id="btn-check" onclick="checkAccounts()">⟳ Перепроверить все</button>
+      <button class="btn-ghost" onclick="loadAccounts()">Обновить</button>
+    </h2>
+    <table>
+      <thead><tr>
+        <th>#</th><th class="sortable" onclick="setSort('accounts','email')">Email</th><th class="sortable" onclick="setSort('accounts','status')">Статус</th>
+        <th>API-ключ (клик = копировать)</th><th class="sortable" onclick="setSort('accounts','free')">Free</th>
+        <th class="sortable" onclick="setSort('accounts','created')">Создан</th><th>Заметка</th>
+      </tr></thead>
+      <tbody id="accounts-tbody"><tr><td colspan="7" class="empty">загрузка…</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- Модели -->
+  <section id="tab-models" class="card hide">
+    <h2>Модели
+      <span class="sub" id="models-sub"></span>
+      <span style="flex:1"></span>
+      <button class="btn-ghost" onclick="loadModels()">Обновить</button>
+    </h2>
+    <table>
+      <thead><tr><th class="sortable" onclick="setSort('models','id')">ID</th><th class="sortable" onclick="setSort('models','name')">Имя</th><th class="sortable" onclick="setSort('models','status')">Статус</th><th class="sortable" onclick="setSort('models','note')">Заметка</th><th>Проверена</th></tr></thead>
+      <tbody id="models-tbody"><tr><td colspan="5" class="empty">загрузка…</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- Капча -->
+  <section id="tab-captcha" class="card hide">
+    <h2>Капча <span class="sub">Cloudflare Turnstile (запасной путь)</span>
+      <span style="flex:1"></span>
+      <button class="btn-ghost" onclick="loadCaptcha()">Обновить</button>
+    </h2>
+    <dl class="kv" id="captcha-kv"></dl>
+    <p style="margin-top:12px;color:var(--text-muted);font-size:12px" id="captcha-note"></p>
+  </section>
+
+  <!-- Пул моста -->
+  <section id="tab-pool" class="card hide">
+    <h2>Пул моста <span class="sub" id="pool-bridge-sub">—</span>
+      <span style="flex:1"></span>
+      <button class="btn-ghost" onclick="loadPool()">Обновить</button>
+    </h2>
+    <div id="pool-summary" style="margin-bottom:12px"></div>
+    <table id="pool-table" class="hide">
+      <thead><tr><th>Ключ</th><th>Статус</th><th>Детали</th></tr></thead>
+      <tbody id="pool-tbody"></tbody>
+    </table>
+  </section>
+
+  <!-- Мост: живой фид апстрим-запросов + лог -->
+  <section id="tab-bridge" class="card hide">
+    <h2>Мост: запросы и логи <span class="sub" id="bridge-sub">апстрим → статус, скорость, ошибки</span>
+      <span style="flex:1"></span>
+      <span id="bridge-status-badge"></span>
+      <button class="btn-ghost" id="btn-bridge-auto" onclick="toggleBridgeAuto()">⏸ авто-обновление: вкл</button>
+      <span class="mono" id="bridge-updated" style="font-size:11px;color:var(--text-muted)">обновлено: —</span>
+      <button class="btn-ghost" onclick="loadBridge()">Обновить</button>
+    </h2>
+    <div id="bridge-stats" style="margin-bottom:12px"></div>
+    <table>
+      <thead><tr>
+        <th class="sortable" onclick="setSort('bridge','ts')">Время</th><th class="sortable" onclick="setSort('bridge','model')">Модель</th><th class="sortable" onclick="setSort('bridge','key')">Ключ</th>
+        <th class="sortable" onclick="setSort('bridge','status')">Статус</th><th class="sortable" onclick="setSort('bridge','latency')">Скорость</th>
+        <th class="sortable" onclick="setSort('bridge','tokens')">Токенов</th><th class="sortable" onclick="setSort('bridge','usd')">$</th>
+      </tr></thead>
+      <tbody id="bridge-tbody"><tr><td colspan="7" class="empty">загрузка…</td></tr></tbody>
+    </table>
+    <h3 style="margin:16px 0 8px;font-size:13px">Лог моста (data/bridge.log)</h3>
+    <div class="log-box" id="bridge-log">загрузка…</div>
+  </section>
+
+  <!-- Подключение: как добавить мост провайдером -->
+  <section id="tab-connect" class="card hide">
+    <h2>Мост как провайдер
+      <span class="sub">OpenAI-совместимый шлюз на пул ключей</span>
+      <span style="flex:1"></span>
+      <span id="connect-bridge-status"></span>
+      <button class="btn-ghost" onclick="loadConnect()">Обновить</button>
+    </h2>
+    <dl class="kv">
+      <dt>Base URL</dt>
+      <dd><span class="key-cell" style="cursor:pointer" title="клик = копировать"
+                id="connect-baseurl">—</span></dd>
+      <dt>API Key</dt>
+      <dd>любая непустая строка — мост её не проверяет, ключ пула подставляет сам</dd>
+      <dt>Model ID</dt>
+      <dd id="connect-models">загрузка…</dd>
+      <dt>Поток (stream)</dt>
+      <dd>поддерживается (<code>"stream": true</code> проксируется)</dd>
+    </dl>
+
+    <h3 style="margin:16px 0 6px;font-size:13px">CLI / IDE (ZCode, Cline, любой OpenAI-совместимый)</h3>
+    <pre id="snip-cli" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-all;margin:8px 0;cursor:pointer" title="клик = копировать" onclick="copyKey(this, this.textContent)">—</pre>
+
+    <h3 style="margin:16px 0 6px;font-size:13px">Проверка curl'ом</h3>
+    <pre id="snip-curl" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-all;margin:8px 0;cursor:pointer" title="клик = копировать" onclick="copyKey(this, this.textContent)">—</pre>
+
+    <h3 style="margin:16px 0 6px;font-size:13px">Python (openai)</h3>
+    <pre id="snip-py" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-all;margin:8px 0;cursor:pointer" title="клик = копировать" onclick="copyKey(this, this.textContent)">—</pre>
+
+    <p style="margin-top:12px;color:var(--text-muted);font-size:12px">
+      Мост сам крутит пул: 401/403 → ключ в dead, 429 → кулдаун, сбой → следующий ключ;
+      когда живых меньше min_pool — сам запускает реггер и пополняет пул.
+      Запуск моста: <span class="mono" id="connect-bridge-start">—</span> (живёт отдельно от реггера)
+    </p>
+  </section>
+
+  <!-- Лимиты -->
+  <section id="tab-limits" class="card hide">
+    <h2>Лимиты и расход
+      <span class="sub" id="limits-sub">расход считаем сами из леджера моста — в реальном времени</span>
+      <span style="flex:1"></span>
+      <span id="limits-status-badge"></span>
+      <button class="btn-ghost" id="btn-limits-check" onclick="checkLimits()" title="проверить квоты на сервере (логин по всем аккаунтам, медленно)">⟳ Сверить с сервером</button>
+      <button class="btn-ghost" onclick="loadLimits()">Обновить</button>
+    </h2>
+    <div id="limits-live" style="margin-bottom:12px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap"></div>
+    <div id="limits-dashboard" class="dash"></div>
+    <div id="limits-summary" style="margin-bottom:14px"></div>
+    <table>
+      <thead><tr>
+        <th>#</th><th class="sortable" onclick="setSort('limits','email')">Аккаунт</th><th class="sortable" onclick="setSort('limits','status')">Статус</th>
+        <th class="sortable" onclick="setSort('limits','req_used')">Запросов</th><th class="sortable" onclick="setSort('limits','tokens')">Токенов</th>
+        <th class="sortable" onclick="setSort('limits','usd')">$ (наш учёт)</th><th class="sortable" onclick="setSort('limits','pct')">% лимита</th>
+        <th class="sortable" onclick="setSort('limits','models')">Модели</th><th class="sortable" onclick="setSort('limits','reset')">Сброс</th>
+      </tr></thead>
+      <tbody id="limits-tbody"><tr><td colspan="9" class="empty">данных пока нет — расход появится после запросов через мост</td></tr></tbody>
+    </table>
+
+    <h3 style="margin:18px 0 8px;font-size:13px">Расход по моделям (что прошло через мост)</h3>
+    <table>
+      <thead><tr>
+        <th class="sortable" onclick="setSort('limitModels','model')">Модель</th><th class="sortable" onclick="setSort('limitModels','requests')">Запросов</th>
+        <th class="sortable" onclick="setSort('limitModels','tokens')">Токенов</th><th class="sortable" onclick="setSort('limitModels','usd')">$ (наш учёт)</th>
+        <th class="sortable" onclick="setSort('limitModels','price_in')">$/1M in</th><th class="sortable" onclick="setSort('limitModels','price_out')">$/1M out</th>
+        <th class="sortable" onclick="setSort('limitModels','per_allowance')">Токенов на 1 лимит</th>
+      </tr></thead>
+      <tbody id="limits-models-tbody"><tr><td colspan="7" class="empty">нет запросов через мост</td></tr></tbody>
+    </table>
+
+    <p style="margin-top:12px;color:var(--text-muted);font-size:12px" id="limits-note"></p>
+  </section>
+
+  <!-- Логи -->
+  <section id="tab-logs" class="card hide">
+    <h2>Логи
+      <span class="sub">data/panel.log, авто-обновление 5с</span>
+      <span style="flex:1"></span>
+      <button class="btn-ghost" onclick="loadLogs()">Обновить</button>
+    </h2>
+    <div class="log-box" id="logs-box">загрузка…</div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let currentTab = 'accounts';
+let logTimer = null;
+let bridgeAuto = true;      // авто-обновление вкладки «Мост»
+// порт моста и путь запуска — приходят из /api/summary (у каждого реггера свои)
+let BRIDGE_PORT = 0;
+let BRIDGE_START = '—';
+
+function toast(msg, isErr) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = 'toast', 2600);
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+  return data;
+}
+
+function fmtTs(ts) {
+  if (!ts) return '—';
+  const d = new Date(typeof ts === 'number' ? ts * 1000 : ts);
+  return isNaN(d) ? String(ts) : d.toLocaleString('ru-RU');
+}
+
+function statusBadge(st) {
+  const map = { ok: ['✓ ok', 'ok'], failed: ['✗ failed', 'failed'],
+                unknown: ['? unknown', 'unknown'],
+                available: ['✓ доступна (free)', 'ok'], verified: ['✅ verified', 'ok'],
+                paid: ['💰 только платно', 'warn'],
+                downgraded: ['⚠️ downgraded', 'warn'], dead: ['❌ dead', 'failed'],
+                exhausted: ['🔋 исчерпан', 'failed'],
+                alive: ['✓ alive', 'ok'], cooldown: ['⏳ cooldown', 'warn'] };
+  const [label, cls] = map[st] || [st || '?', 'unknown'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── сортировка таблиц (клик по заголовку) ───────────────
+const DATA = {accounts: [], models: [], limits: [], limitModels: [], bridge: []};
+const SORT = {};   // таблица → {k, dir}
+
+function setSort(table, key) {
+  const cur = SORT[table];
+  SORT[table] = {k: key, dir: (cur && cur.k === key) ? -cur.dir : -1};
+  renderTable(table);
+}
+
+function sortRows(rows, table, getters) {
+  const s = SORT[table];
+  if (!s || !getters[s.k]) return rows;
+  const get = getters[s.k];
+  return [...rows].sort((a, b) => {
+    let x = get(a), y = get(b);
+    if (x === null || x === undefined) x = '';
+    if (y === null || y === undefined) y = '';
+    if (typeof x === 'number' && typeof y === 'number') return (x - y) * s.dir;
+    return String(x).localeCompare(String(y), 'ru') * s.dir;
+  });
+}
+
+function th(table, key, label, title) {
+  const s = SORT[table];
+  const mark = (s && s.k === key) ? (s.dir < 0 ? ' ▾' : ' ▴') : '';
+  return `<th class="sortable" onclick="setSort('${table}','${key}')" title="${esc(title || 'сортировать')}">${label}${mark}</th>`;
+}
+
+function renderTable(table) {
+  if (table === 'accounts') renderAccounts();
+  else if (table === 'models') renderModels();
+  else if (table === 'limits') renderLimits();
+  else if (table === 'limitModels') renderLimitModels();
+  else if (table === 'bridge') renderBridge();
+}
+
+// ── сводка + прогон (каждые 5с) ─────────────────────────
+async function refreshSummary() {
+  try {
+    const s = await api('/api/summary');
+    $('svc-dot').className = 'pulse-dot';
+    $('svc-status').textContent = 'панель жива';
+    $('ver').textContent = 'v' + (s.version || '?');
+    $('hdr-total').textContent = s.counts?.total ?? '0';
+    $('hdr-ok').textContent = s.counts?.ok ?? '0';
+    $('hdr-failed').textContent = s.counts?.failed ?? '0';
+    $('hdr-unknown').textContent = s.counts?.unknown ?? '0';
+    if (s.service) {
+      $('svc-name').textContent = s.service;
+      $('svc-service').textContent = s.service;
+      document.title = s.service + ' — панель';
+    }
+    const b = s.bridge || {};
+    if (b.port) BRIDGE_PORT = b.port;
+    if (b.start) BRIDGE_START = b.start;
+    $('bridge-port-label').textContent = b.port ? ':' + b.port : '';
+    $('pool-bridge-sub').textContent = b.port ? `127.0.0.1:${b.port}` : 'мост не задан';
+    $('bridge-badge').className = 'badge ' + (b.alive ? 'ok' : 'failed');
+    $('bridge-badge').textContent = b.alive ? 'жив' : 'нет';
+    const lr = s.last_run || {};
+    $('hdr-lastrun').textContent = lr.started_at
+      ? `${fmtTs(lr.started_at)} — ${lr.status} (${lr.ok}/${lr.total})` : '—';
+  } catch (e) {
+    $('svc-dot').className = 'pulse-dot offline';
+    $('svc-status').textContent = 'нет связи';
+  }
+}
+
+async function refreshJob() {
+  try {
+    const j = await api('/api/job');
+    const running = j.status === 'running';
+    $('job-tag').textContent = j.status || 'idle';
+    $('job-nums').textContent = `${j.done || 0}/${j.total || 0}`;
+    $('job-fill').style.width = j.total ? Math.round(100 * (j.done || 0) / j.total) + '%' : '0%';
+    $('btn-stop').classList.toggle('hide', !running);
+    $('btn-run').disabled = running;
+    $('btn-run-par').disabled = running;
+    if (j.last_error && !running) $('job-tag').textContent = j.status + ' ⚠';
+    // текущий аккаунт: шаг k/6 + подпись
+    const c = j.current;
+    const line = $('job-step-line');
+    const workersBox = $('job-workers');
+    const currents = (j.currents || []).filter(Boolean);
+    if (running && currents.length > 1) {
+      // параллельный режим — по строке на воркер
+      line.classList.add('hide');
+      workersBox.classList.remove('hide');
+      workersBox.innerHTML = currents.map((w, i) => {
+        if (!w || w.done) return `<div class="worker-row"><span class="w-name">w${i+1}</span><span class="w-label">—</span></div>`;
+        const pct = w.step ? Math.round(100 * w.step / (w.steps_total || 6)) : 0;
+        return `<div class="worker-row"><span class="w-name">w${i+1}</span>
+          <span class="w-label">акк ${w.index || '?'} · ${w.step || 0}/${w.steps_total || 6}: ${esc(w.label || '')}</span>
+          <div class="step-bar-wrap"><div class="step-bar-fill" style="width:${pct}%"></div></div></div>`;
+      }).join('');
+    } else if (running && c && c.step > 0) {
+      workersBox.classList.add('hide');
+      line.classList.remove('hide');
+      $('job-step-text').textContent =
+        `акк ${c.index}/${j.total} · шаг ${c.step}/${c.steps_total}: ${c.label}`;
+      $('job-step-fill').style.width = Math.round(100 * c.step / (c.steps_total || 6)) + '%';
+    } else {
+      line.classList.add('hide');
+      workersBox.classList.add('hide');
+    }
+  } catch (e) { /* молча — следующий тик */ }
+}
+
+async function startRegister(parallel) {
+  const count = parseInt($('count').value || '1', 10);
+  const workers = parallel ? parseInt($('workers').value || '1', 10) : 1;
+  try {
+    const r = await api('/api/register', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({count, workers})
+    });
+    toast('Прогон запущен: ' + r.job_id);
+    refreshJob();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function stopJob() {
+  try {
+    await api('/api/job/stop', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+    toast('Стоп запрошен — ждём конца шага');
+    refreshJob();
+  } catch (e) { toast(e.message, true); }
+}
+
+// ── аккаунты ────────────────────────────────────────────
+function copyKey(el, key) {
+  navigator.clipboard.writeText(key).then(() => {
+    const old = el.textContent;
+    el.textContent = '✓ скопировано';
+    el.classList.add('copied');
+    setTimeout(() => { el.textContent = old; el.classList.remove('copied'); }, 1200);
+  }).catch(() => toast('clipboard недоступен', true));
+}
+
+async function loadAccounts() {
+  try {
+    const rows = await api('/api/accounts');
+    DATA.accounts = rows;
+    $('tab-count-accounts').textContent = rows.length || '';
+    renderAccounts();
+  } catch (e) { toast(e.message, true); }
+}
+
+function renderAccounts() {
+  const hideEx = $('hide-exhausted') && $('hide-exhausted').checked;
+  let all = DATA.accounts;
+  if (hideEx) all = all.filter(a => !a.exhausted);
+  const rows = sortRows(all, 'accounts', {
+    email: a => a.email, status: a => a.status, free: a => (a.free_tier_enabled ? 1 : 0),
+    requests: a => (a.requests || 0), used: a => (a.requests || 0),
+    created: a => (a.created_at || ''),
+    exhausted: a => (a.exhausted ? 1 : 0),
+  });
+  const exN = DATA.accounts.filter(a => a.exhausted).length;
+  $('accounts-sub').textContent = DATA.accounts.length
+    ? (hideEx && exN ? `показано: ${rows.length} из ${DATA.accounts.length} (скрыто исчерпанных: ${exN})`
+                     : `всего: ${DATA.accounts.length}`)
+    : 'нет аккаунтов';
+  const tb = $('accounts-tbody');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="empty">Аккаунтов пока нет — запусти регистрацию</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map((a, i) => {
+    const key = a.api_key || '';
+    const short = key ? esc(key.slice(0, 18)) + '…' + esc(key.slice(-6)) : '—';
+    const used = a.requests || 0;
+    const rem = a.remaining_usd;
+    const note = a.exhausted
+      ? `🔋 исчерпан${a.reset_at ? ', сброс ' + String(a.reset_at).slice(0, 10) : ''}`
+      : (used ? used + ' запр.' + (rem != null ? `, остаток $${Number(rem).toFixed(4)}` : '') : esc(a.note || ''));
+    return `<tr${a.exhausted ? ' style="opacity:.55"' : ''}>
+      <td class="mono">${i + 1}</td>
+      <td class="mono">${esc(a.email)}</td>
+      <td>${statusBadge(a.exhausted ? 'exhausted' : a.status)}</td>
+      <td>${key ? `<span class="key-cell" title="${esc(key)}" onclick='copyKey(this, ${JSON.stringify(key)})'>${short}</span>` : '—'}</td>
+      <td>${a.free_tier_enabled ? '<span style="color:var(--ok)">✓</span>' : '<span style="color:var(--bad)">✗</span>'}</td>
+      <td class="mono" style="font-size:11px">${esc(a.created_at || '—')}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${note}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function checkAccounts() {
+  $('btn-check').disabled = true;
+  try {
+    const r = await api('/api/accounts/check', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+    toast(r.background ? `Фоновая перепроверка ${r.total} ключей…` : `Перепроверено: ${r.checked}`);
+    setTimeout(loadAccounts, r.background ? 8000 : 500);
+  } catch (e) { toast(e.message, true); }
+  finally { $('btn-check').disabled = false; }
+}
+
+// ── модели ──────────────────────────────────────────────
+async function loadModels() {
+  try {
+    const d = await api('/api/models');
+    DATA.models = d.models || [];
+    $('tab-count-models').textContent = DATA.models.length || '';
+    $('models-sub').textContent = 'источник: ' + (d.source || '?');
+    renderModels();
+  } catch (e) { toast(e.message, true); }
+}
+
+function renderModels() {
+  // по умолчанию: сначала доступные (free), потом платные; внутри — по алфавиту
+  const rows = sortRows(DATA.models, 'models', {
+    id: m => m.id,
+    name: m => (m.name || ''),
+    status: m => (m.status === 'available' ? 0 : 1),   // доступные выше
+    note: m => (m.note || ''),
+  });
+  const tb = $('models-tbody');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">Список пуст</td></tr>'; return; }
+  tb.innerHTML = rows.map(m => `<tr>
+    <td class="mono">${esc(m.id)}</td>
+    <td>${esc(m.name || '')}</td>
+    <td>${statusBadge(m.status)}</td>
+    <td style="font-size:11px;color:var(--text-muted)">${esc(m.note || '')}</td>
+    <td class="mono" style="font-size:11px">${m.last_checked ? esc(m.last_checked) : '—'}</td>
+  </tr>`).join('');
+}
+
+// ── капча ───────────────────────────────────────────────
+async function loadCaptcha() {
+  try {
+    const c = await api('/api/captcha');
+    $('captcha-kv').innerHTML = `
+      <dt>Провайдер</dt><dd>${esc(c.provider)}</dd>
+      <dt>Camoufox (бесплатный путь)</dt><dd>${c.configured ? '<span class="badge ok">✓ найден</span>' : '<span class="badge failed">✗ нет</span>'} ${esc(c.camoufox_python || '')}</dd>
+      <dt>CapSolver (fallback)</dt><dd>${c.capsolver_configured ? '<span class="badge ok">✓ ключ задан</span>' : '<span class="badge unknown">— не задан</span>'}</dd>
+      <dt>Баланс</dt><dd>${c.balance ?? 'н/д'}</dd>`;
+    $('captcha-note').textContent = c.note || '';
+  } catch (e) { toast(e.message, true); }
+}
+
+// ── пул моста ───────────────────────────────────────────
+async function loadPool() {
+  try {
+    const p = await api('/api/pool');
+    const b = p.bridge || {};
+    let html = `<span class="badge ${b.alive ? 'ok' : 'failed'}">мост :${b.port} — ${b.alive ? 'жив' : 'недоступен'}</span> `;
+    if (p.counts) {
+      html += `<span class="badge ok">alive ${p.counts.alive}</span>
+               <span class="badge warn">cooldown ${p.counts.cooldown}</span>
+               <span class="badge failed">dead ${p.counts.dead}</span>
+               <span class="badge unknown">всего ${p.counts.total}</span>`;
+      if (p.refill != null) html += ` <span class="badge unknown">refill: ${esc(JSON.stringify(p.refill))}</span>`;
+    } else {
+      html += `<span style="color:var(--text-muted)">${esc(p.note || '')}</span>`;
+    }
+    $('pool-summary').innerHTML = html;
+    const keys = Object.entries(p.keys || {});
+    $('pool-table').classList.toggle('hide', !keys.length);
+    $('pool-tbody').innerHTML = keys.map(([k, v]) => {
+      const short = k.length > 30 ? esc(k.slice(0, 18)) + '…' + esc(k.slice(-6)) : esc(k);
+      const details = Object.entries(v).filter(([f]) => f !== 'status')
+        .map(([f, val]) => `${f}=${typeof val === 'object' ? JSON.stringify(val) : val}`).join(' ');
+      return `<tr><td class="mono" style="font-size:11px">${short}</td>
+        <td>${statusBadge((v.status || '').toLowerCase())}</td>
+        <td class="mono" style="font-size:11px;color:var(--text-muted)">${esc(details)}</td></tr>`;
+    }).join('');
+  } catch (e) { toast(e.message, true); }
+}
+
+// ── подключение (мост как провайдер) ────────────────────
+async function loadConnect() {
+  let port = BRIDGE_PORT;
+  try {
+    const s = await api('/api/summary');
+    const b = s.bridge || {};
+    if (b.port) port = b.port;
+    $('connect-bridge-status').innerHTML =
+      `<span class="badge ${b.alive ? 'ok' : 'failed'}">мост :${port} — ${b.alive ? 'жив' : 'не запущен'}</span>`;
+  } catch (e) { /* молча */ }
+  // базовый URL и сниппеты — из порта моста (свой у каждого реггера)
+  const base = `http://127.0.0.1:${port}/v1`;
+  $('connect-baseurl').textContent = base;
+  $('connect-baseurl').setAttribute('onclick', `copyKey(this, '${base}')`);
+  $('connect-bridge-start').textContent = BRIDGE_START;
+  let model = '<model>:free';
+  try {
+    const m = await api('/api/models');
+    const free = (m.models || []).filter(x => (x.id || '').endsWith(':free')).map(x => x.id);
+    $('connect-models').textContent = free.length ? free.join(', ') : '—';
+    if (free.length) model = free[0];
+  } catch (e) { $('connect-models').textContent = '—'; }
+  const cli = `BaseUrl: ${base}\nApiKey:  <любая непустая строка>\nModelID: ${model}`;
+  const curl = `curl ${base}/chat/completions \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"${model}","messages":[{"role":"user","content":"hi"}],"max_tokens":20}'`;
+  const py = `from openai import OpenAI\nclient = OpenAI(base_url="${base}", api_key="<любая непустая строка>")\nr = client.chat.completions.create(model="${model}",\n                                   messages=[{"role": "user", "content": "hi"}])\nprint(r.choices[0].message.content)`;
+  $('snip-cli').textContent = cli;
+  $('snip-curl').textContent = curl;
+  $('snip-py').textContent = py;
+}
+
+// ── лимиты ──────────────────────────────────────────────
+function fmtClock(ts) {
+  if (!ts) return '—';
+  const d = new Date(typeof ts === 'number' ? ts * 1000 : ts);
+  return isNaN(d) ? String(ts) : d.toLocaleTimeString('ru-RU');
+}
+
+function fmtAgo(ts) {
+  if (!ts) return '';
+  const sec = Math.max(0, Math.round(Date.now() / 1000 - (typeof ts === 'number' ? ts : Date.parse(ts) / 1000)));
+  if (sec < 60) return `${sec}с назад`;
+  if (sec < 3600) return `${Math.round(sec / 60)}м назад`;
+  return `${Math.round(sec / 3600)}ч назад`;
+}
+
+async function loadLimitsStatus() {
+  let s;
+  try { s = await api('/api/limits/status'); } catch (e) { return; }
+  const running = !!s.running;
+  $('limits-status-badge').innerHTML = running
+    ? `<span class="badge warn">⟳ сбор квот ${s.done || 0}/${s.total || 0}</span>`
+    : `<span class="badge ok">квоты актуальны</span>`;
+  const bits = [];
+  bits.push(`<span>обновлено: <strong class="mono">${fmtClock(s.finished_at)}</strong></span>`);
+  if (s.interval_sec) bits.push(`<span>фон-сбор: каждые ${Math.round(s.interval_sec / 60)} мин</span>`);
+  if (running) {
+    const pct = s.total ? Math.round(100 * (s.done || 0) / s.total) : 0;
+    bits.push(`<span class="badge warn">идёт сбор ${s.done || 0}/${s.total || 0} (${pct}%)</span>`);
+  } else if (s.skipped) {
+    bits.push(`<span class="badge unknown">пропуск: ${esc(s.skipped)}</span>`);
+  } else if (s.next_run_at) {
+    bits.push(`<span>следующий: <strong class="mono">${fmtClock(s.next_run_at)}</strong></span>`);
+  }
+  if (s.error) bits.push(`<span class="badge failed">ошибка: ${esc(s.error)}</span>`);
+  $('limits-live').innerHTML = bits.join('');
+}
+
+async function loadLimits() {
+  try {
+    const d = await api('/api/limits');
+    const t = d.totals || {};
+    const usd = (t.usd || 0);
+    const est = t.usd_per_account_est;
+    const fmtN = n => (n === null || n === undefined) ? '—' : Number(n).toLocaleString('ru-RU');
+    const burntTok = t.total_tokens || 0;
+    const leftTok = t.tokens_remaining_est;
+    const leftUsd = t.usd_remaining_est;
+    const spentPct = (est && t.accounts)
+      ? Math.min(100, Math.round(100 * usd / (est * t.accounts))) : null;
+
+    $('limits-dashboard').innerHTML = `
+      <div class="dash-cell"><div class="lbl">Сожжено токенов</div>
+        <div class="val">${fmtN(burntTok)}</div>
+        <div class="sub">${fmtN(t.requests)} запросов</div></div>
+      <div class="dash-cell ok"><div class="lbl">Ещё можно сжечь</div>
+        <div class="val">${fmtN(leftTok)}</div>
+        <div class="sub">токенов (оценка)</div></div>
+      <div class="dash-cell warn"><div class="lbl">Сожжено $</div>
+        <div class="val">$${usd.toFixed(4)}</div>
+        <div class="sub">по прайсу (list-price)</div></div>
+      <div class="dash-cell ${leftUsd !== null && leftUsd !== undefined && leftUsd < 1 ? 'hot' : 'ok'}">
+        <div class="lbl">Осталось $</div>
+        <div class="val">${leftUsd === null || leftUsd === undefined ? '—' : '$' + leftUsd.toFixed(4)}</div>
+        <div class="sub">${est ? `лимит ~$${est}/акк` : 'лимит не измерен'}</div></div>
+      <div class="dash-cell"><div class="lbl">Аккаунты</div>
+        <div class="val">${t.alive || 0}<span style="font-size:13px;color:var(--text-muted)">/${t.accounts || 0}</span></div>
+        <div class="sub">${t.exhausted || 0} исчерпано · ${t.free_accounts || 0} с free</div></div>
+      <div class="dash-cell"><div class="lbl">Сверка с сервером</div>
+        <div class="val" style="font-size:15px">${d.checked_at ? fmtClock(d.checked_at) : 'не делалась'}</div>
+        <div class="sub">${d.checked_at ? fmtAgo(d.checked_at) : 'кнопкой «Сверить с сервером»'} · расход и так живой</div></div>
+      ${spentPct !== null ? `<div class="dash-cell ${spentPct > 80 ? 'hot' : 'ok'}">
+        <div class="lbl">Израсходовано лимита</div>
+        <div class="val">${spentPct}%</div>
+        <div class="sub">${t.avg_usd_per_1k_tokens ? `~$${t.avg_usd_per_1k_tokens}/1K токенов` : ''}</div></div>` : ''}`;
+
+    $('limits-summary').innerHTML =
+      `<span class="badge ok">аккаунтов ${t.accounts || 0}</span>
+       <span class="badge ok">с free-tier ${t.free_accounts || 0}</span>
+       <span class="badge ${t.exhausted ? 'failed' : 'ok'}">исчерпано ${t.exhausted || 0}</span>
+       <span class="badge unknown">запросов ${t.requests || 0}</span>
+       <span class="badge unknown">токенов ${fmtN(burntTok)}</span>
+       <span class="badge warn">$${usd.toFixed(4)}</span>
+       <span style="color:var(--text-muted);font-size:11px">${t.local_ledger ? 'учёт локальный (леджер моста)' : 'квоты с сервера'} · сверка: ${d.checked_at ? fmtTs(d.checked_at) : 'не делалась'}</span>`;
+
+    DATA.limits = d.accounts || [];
+    DATA.limitsMeta = {ma: d.models_available || {}, b: d.billing || {}};
+    renderLimits();
+    loadLimitsStatus();
+    loadModelCosts();
+  } catch (e) { toast(e.message, true); }
+}
+
+function renderLimits() {
+  // по умолчанию: свободные (не исчерпанные) выше, внутри — по расходу $
+  const rows = sortRows(DATA.limits, 'limits', {
+    email: r => r.email,
+    status: r => (r.exhausted ? 1 : 0),
+    used: r => (r.exhausted ? 1 : 0),
+    req_used: r => (r.req_used ?? -1),
+    tokens: r => (r.total_tokens || 0),
+    usd: r => (r.usd || 0),
+    pct: r => (r.used_pct ?? -1),
+    models: r => (r.models || []).length,
+    reset: r => (r.reset_at || ''),
+  });
+  $('limits-tbody').innerHTML = rows.length ? rows.map((r, i) => {
+    const models = (r.models || []).length;
+    const status = r.error ? `<span class="badge failed" title="${esc(r.error)}">ошибка</span>`
+      : (r.exhausted ? '<span class="badge failed">исчерпан</span>'
+                     : '<span class="badge ok">свободен</span>');
+    const toks = r.total_tokens ? r.total_tokens.toLocaleString('ru-RU') : '0';
+    const req = (r.req_used === null || r.req_used === undefined) ? '—' : r.req_used;
+    const usdCell = r.usd ? '$' + r.usd.toFixed(5) : '—';
+    const pct = (r.used_pct === null || r.used_pct === undefined) ? '—' : r.used_pct + '%';
+    const reset = r.reset_at ? String(r.reset_at).slice(0, 10) : '—';
+    return `<tr>
+      <td class="mono">${i + 1}</td>
+      <td class="mono" style="font-size:11px">${esc(r.email)}</td>
+      <td>${status}</td>
+      <td class="mono">${req}</td>
+      <td class="mono">${toks}</td>
+      <td class="mono">${usdCell}</td>
+      <td class="mono">${pct}</td>
+      <td class="mono" title="${esc((r.models || []).join(', '))}">${models ? models + ' шт' : '—'}</td>
+      <td class="mono" style="font-size:11px">${reset}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" class="empty">данных пока нет — расход появится после запросов через мост</td></tr>';
+
+  const meta = DATA.limitsMeta || {ma: {}, b: {}};
+  const ma = meta.ma, b = meta.b;
+  $('limits-note').innerHTML = 'Доступные модели: ' +
+    (Object.keys(ma).length
+      ? Object.entries(ma).map(([m, n]) => `<span class="badge ok">${esc(m)} ×${n}</span>`).join(' ')
+      : '—') +
+    `<br><b>Тарификация:</b> лимит считается в <b>${esc(b.unit || '$')}</b> по прайсу, ` +
+    `не в токенах и не в запросах. Период — ${esc(b.period || '')}. ` +
+    `При исчерпании: ${esc(b.on_exhausted || '')}.<br>` +
+    `<span style="color:var(--text-muted)">${esc(b.note || '')}</span>`;
+}
+
+async function loadModelCosts() {
+  try {
+    const d = await api('/api/limits/models');
+    DATA.limitModels = d.models || [];
+    renderLimitModels();
+  } catch (e) { /* молча */ }
+}
+
+function renderLimitModels() {
+  const rows = sortRows(DATA.limitModels, 'limitModels', {
+    model: m => m.model, requests: m => (m.requests || 0),
+    tokens: m => (m.total_tokens || 0), usd: m => (m.usd || 0),
+    price_in: m => (m.usd_per_1m_in ?? 0), price_out: m => (m.usd_per_1m_out ?? 0),
+    per_allowance: m => (m.tokens_per_allowance || 0),
+  });
+  $('limits-models-tbody').innerHTML = rows.length ? rows.map(m => `<tr>
+    <td class="mono" style="font-size:11px">${esc(m.model)}</td>
+    <td class="mono">${m.requests}</td>
+    <td class="mono">${(m.total_tokens || 0).toLocaleString('ru-RU')}</td>
+    <td class="mono">$${(m.usd || 0).toFixed(5)}</td>
+    <td class="mono">${m.usd_per_1m_in != null ? '$' + m.usd_per_1m_in : '—'}</td>
+    <td class="mono">${m.usd_per_1m_out != null ? '$' + m.usd_per_1m_out : '—'}</td>
+    <td class="mono">${m.tokens_per_allowance ? m.tokens_per_allowance.toLocaleString('ru-RU') : '—'}</td>
+  </tr>`).join('') : '<tr><td colspan="7" class="empty">нет запросов через мост</td></tr>';
+}
+
+async function checkLimits() {  try {
+    const r = await api('/api/limits/check', {method: 'POST'});
+    if (r.started) {
+      toast('сбор квот запущен — обновится через ~30с');
+      setTimeout(loadLimits, 20000);
+      setTimeout(loadLimits, 45000);
+    }
+  } catch (e) { toast(e.message, true); }
+}
+
+// ── мост: запросы + логи ────────────────────────────────
+function bridgeTimerStart() {
+  clearInterval(logTimer);
+  logTimer = bridgeAuto ? setInterval(loadBridge, 5000) : null;
+  const btn = $('btn-bridge-auto');
+  if (btn) {
+    btn.textContent = bridgeAuto ? '⏸ авто-обновление: вкл' : '▶ авто-обновление: выкл';
+    btn.style.color = bridgeAuto ? '' : 'var(--warn)';
+  }
+  const sub = $('bridge-sub');
+  if (sub) sub.textContent = bridgeAuto
+    ? 'апстрим → статус, скорость, ошибки (авто 5с)'
+    : 'апстрим → статус, скорость, ошибки (авто выключено)';
+}
+
+function toggleBridgeAuto() {
+  bridgeAuto = !bridgeAuto;
+  if (currentTab === 'bridge') bridgeTimerStart();
+  else {
+    const btn = $('btn-bridge-auto');
+    if (btn) {
+      btn.textContent = bridgeAuto ? '⏸ авто-обновление: вкл' : '▶ авто-обновление: выкл';
+      btn.style.color = bridgeAuto ? '' : 'var(--warn)';
+    }
+  }
+  toast(bridgeAuto ? 'авто-обновление моста включено' : 'авто-обновление моста выключено');
+}
+
+async function loadBridge() {
+  try {
+    const d = await api('/api/bridge/requests?tail=60');
+    const s = d.stats || {};
+    const b = d.bridge || {};
+    $('bridge-status-badge').innerHTML = b.alive
+      ? '<span class="badge ok">мост жив</span>' : '<span class="badge failed">мост не отвечает</span>';
+    $('bridge-stats').innerHTML =
+      `<span class="badge ok">показано ${s.shown || 0}</span>
+       <span class="badge ${s.errors ? 'failed' : 'ok'}">ошибок ${s.errors || 0}</span>
+       <span class="badge unknown">avg ${s.avg_ms != null ? s.avg_ms + ' мс' : '—'}</span>
+       <span class="badge ${s.p95_ms > 20000 ? 'warn' : 'unknown'}">p95 ${s.p95_ms != null ? s.p95_ms + ' мс' : '—'}</span>
+       <span class="badge warn">макс ${s.slowest_ms != null ? s.slowest_ms + ' мс' : '—'}</span>`;
+    const rows = d.requests || [];
+    DATA.bridge = rows;
+    DATA.bridgeStats = s;
+    renderBridge();
+  } catch (e) { /* молча */ }
+  try {
+    const l = await api('/api/bridge/logs?tail=120');
+    const box = $('bridge-log');
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    box.textContent = (l.lines || []).join('\n') || '(пусто)';
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  } catch (e) { /* молча */ }
+  const up = $('bridge-updated');
+  if (up) up.textContent = 'обновлено: ' + new Date().toLocaleTimeString('ru-RU');
+}
+
+function renderBridge() {
+  const rows = sortRows(DATA.bridge, 'bridge', {
+    ts: r => (r.ts || ''), model: r => (r.model || ''),
+    key: r => (r.key || ''), status: r => (r.status ?? 0),
+    latency: r => (r.latency_ms || 0), tokens: r => (r.tokens || 0),
+    usd: r => (r.usd || 0),
+  });
+  $('bridge-tbody').innerHTML = rows.length ? rows.map(r => {
+    const okSt = typeof r.status === 'number' && r.status >= 200 && r.status < 300;
+    const stCls = okSt ? 'ok' : (r.status === 429 ? 'warn' : 'failed');
+    const slow = r.latency_ms > 20000 ? 'style="color:#fbbf24"' : '';
+    return `<tr>
+      <td class="mono" style="font-size:11px">${esc((r.ts || '').slice(11, 19))}</td>
+      <td class="mono" style="font-size:11px">${esc(r.model || '?')}</td>
+      <td class="mono" style="font-size:11px">${esc(r.key || '')}…</td>
+      <td><span class="badge ${stCls}">${r.status ?? '—'}</span></td>
+      <td class="mono" ${slow}>${r.latency_ms != null ? r.latency_ms + ' мс' : '—'}</td>
+      <td class="mono">${r.tokens || 0}</td>
+      <td class="mono">${r.usd ? '$' + Number(r.usd).toFixed(5) : '—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" class="empty">запросов через мост ещё не было</td></tr>';
+}
+
+// ── логи ────────────────────────────────────────────────
+async function loadLogs() {
+  try {
+    const d = await api('/api/logs?tail=200');
+    const box = $('logs-box');
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    box.textContent = (d.lines || []).join('\n') || '(пусто)';
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  } catch (e) { /* молча */ }
+}
+
+// ── вкладки ─────────────────────────────────────────────
+function showTab(name) {
+  currentTab = name;
+  document.querySelectorAll('nav.tabs-nav button').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === name));
+  ['accounts', 'models', 'limits', 'captcha', 'pool', 'bridge', 'connect', 'logs'].forEach(t =>
+    $('tab-' + t).classList.toggle('hide', t !== name));
+  clearInterval(logTimer);
+  logTimer = null;
+  if (name === 'accounts') loadAccounts();
+  if (name === 'models') loadModels();
+  if (name === 'limits') { loadLimits(); logTimer = setInterval(loadLimits, 5000); }
+  if (name === 'captcha') loadCaptcha();
+  if (name === 'pool') loadPool();
+  if (name === 'bridge') { loadBridge(); bridgeTimerStart(); }
+  if (name === 'connect') loadConnect();
+  if (name === 'logs') { loadLogs(); logTimer = setInterval(loadLogs, 5000); }
+}
+
+// ── инициализация ───────────────────────────────────────
+refreshSummary(); refreshJob(); loadAccounts();
+setInterval(() => { refreshSummary(); refreshJob(); }, 5000);
+setInterval(() => { if (currentTab === 'accounts') loadAccounts(); }, 30000);
+</script>
+</body>
+</html>
