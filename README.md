@@ -70,7 +70,7 @@ Haiku 4.5.
 | Chrome + Playwright палится | Camoufox с `humanize=True` проходит |
 | Внешний солвер (capsolver и пр.) | **не работает**: токен привязан к IP и сессии виджета |
 | React-селекты в онбординге | клик по координатам + выбор `[role=option]` |
-| Сверка IP капчи и сабмита | ISP-прокси со статичным IP + `geoip=True` |
+| Прокси только мешает | Bright Data ISP → Cloudflare банит до формы; напрямую проходит |
 
 Полный разбор с граблями и замерами — [`register/docs/РАЗБОР.md`](register/docs/РАЗБОР.md).
 
@@ -84,7 +84,9 @@ Haiku 4.5.
 - **Go 1.24+** — для моста (на Windows `.bat` соберёт `postman2api.exe` сам)
 - **Catch-all почта** с admin API — чтобы читать коды подтверждения
   (как поднять с нуля — [`register/docs/ПОЧТА.md`](register/docs/ПОЧТА.md))
-- **Прокси** (желательно) — ISP со статичным IP, иначе Cloudflare банит
+
+Прокси **не нужен**: регистрация идёт напрямую с домашнего IP. Bright Data
+здесь только вредит — с ним Cloudflare блокирует ещё до формы.
 
 ### Windows (одним файлом)
 
@@ -106,7 +108,7 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 python3 -m camoufox fetch          # скачать браузер
 
-cp config.example.json config.json # заполни почту и прокси
+cp config.example.json config.json # заполни почту
 bash start.sh                      # панель на http://127.0.0.1:9924
 ```
 
@@ -173,7 +175,7 @@ curl http://127.0.0.1:12049/v1/chat/completions \
 
 ```
 register/
-├── core/            логика регистрации, почта, прокси, лимиты
+├── core/            логика регистрации, почта, лимиты
 ├── panel/           веб-панель (:9924) — запуск прогонов, статистика
 ├── docs/РАЗБОР.md   полный разбор флоу и грабель
 ├── docs/ПОЧТА.md    как поднять catch-all почту для авторега
